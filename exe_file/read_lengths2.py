@@ -16,9 +16,11 @@ def get_data(infile:str)->List[float]:
     with open(_p) as file:
         csvfile = csv.reader(file)
         for row in csvfile:
-            L.append(float(row[0]))
-            Q.append(float(row[1]))
-        return list(zip(L,Q))
+            L.append(int(row[0]))
+            Q.append(int(row[1]))
+        return list(zip(Q,L))
+        #since the program only accept input as (Q,L)
+        #when we input csv as (L,Q), we need to switch the order
 
 
 

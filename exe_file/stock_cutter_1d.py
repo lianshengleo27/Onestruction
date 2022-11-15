@@ -376,7 +376,7 @@ def StockCutter1D(child_rolls, parent_rolls, output_json=True, large_model=True)
               solve_model(demands=child_rolls, parent_width=parent_width)
 
     # convert the format of output of solve_model to be exactly same as solve_large_model
-    print('consumed_big_rolls before adjustment: ', consumed_big_rolls)
+    # print('consumed_big_rolls before adjustment: ', consumed_big_rolls)
     new_consumed_big_rolls = []
     for big_roll in consumed_big_rolls:
       if len(big_roll) < 2:
@@ -393,7 +393,7 @@ def StockCutter1D(child_rolls, parent_rolls, output_json=True, large_model=True)
           # if it's an integer, add it to the list
           subrolls.append(subitem)
       new_consumed_big_rolls.append([unused_width, subrolls])
-    print('consumed_big_rolls after adjustment: ', new_consumed_big_rolls)
+    # print('consumed_big_rolls after adjustment: ', new_consumed_big_rolls)
     consumed_big_rolls = new_consumed_big_rolls
   
   else:
@@ -478,7 +478,7 @@ def drawGraph(consumed_big_rolls, child_rolls, parent_width):
       y2 = y1 + 8 # the height of each big roll will be 8 
       for j, small_roll in enumerate(small_rolls):
         x2 = x2 + small_roll
-        print(f"{x1}, {y1} -> {x2}, {y2}")
+        # print(f"{x1}, {y1} -> {x2}, {y2}")
         width = abs(x1-x2)
         height = abs(y1-y2)
         # print(f"Rect#{idx}: {width}x{height}")
@@ -513,7 +513,7 @@ if __name__ == '__main__':
       child_rolls = get_data(infile_name)
     else:
       child_rolls = gen_data(3)
-    parent_rolls = [[10, 120]] # 10 doesn't matter, it is not used at the moment
+    parent_rolls = [[10, 12000]] # 10 doesn't matter, it is not used at the moment
 
     consumed_big_rolls = StockCutter1D(child_rolls, parent_rolls, output_json=False, large_model=False)
     typer.echo(f"{consumed_big_rolls}")
