@@ -521,18 +521,25 @@ if __name__ == '__main__':
 
     if infile_name:
       child_rolls = get_data(infile_name)
+      child_rolls_ascending = get_data(infile_name)
+      child_rolls_descending = get_data(infile_name)
     else:
       child_rolls = gen_data(3)
     parent_rolls = [[10, 12000]] # 10 doesn't matter, it is not used at the moment
 
     consumed_big_rolls = StockCutter1D(child_rolls, parent_rolls, output_json=False, large_model=True)
-    typer.echo(f"{consumed_big_rolls}")
+    consumed_big_rolls_ascending = StockCutter1D(child_rolls_ascending, parent_rolls, output_json=False, large_model=True)
+    consumed_big_rolls_descending = StockCutter1D(child_rolls_descending, parent_rolls, output_json=False, large_model=True)
+
+    # typer.echo(f"{consumed_big_rolls}")
 
 
-    for idx, roll in enumerate(consumed_big_rolls):
-      typer.echo(f"Roll #{idx}:{roll}")
+    # for idx, roll in enumerate(consumed_big_rolls):
+    #   typer.echo(f"Roll #{idx}:{roll}")
 
     drawGraph(consumed_big_rolls, child_rolls, parent_width=parent_rolls[0][1])
+    drawGraph(consumed_big_rolls_ascending, child_rolls, parent_width=parent_rolls[0][1])
+    drawGraph(consumed_big_rolls_descending, child_rolls, parent_width=parent_rolls[0][1])
 
 if __name__ == "__main__":
   typer.run(main)
