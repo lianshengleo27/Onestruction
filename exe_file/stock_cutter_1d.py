@@ -8,7 +8,7 @@ from ortools.linear_solver import pywraplp
 from math import ceil
 from random import randint
 import json
-from read_lengths2 import get_data
+from read_lengths2 import get_data, get_data_ascending, get_data_descending
 import typer
 from typing import Optional
 
@@ -75,7 +75,8 @@ def solve_model(demands, parent_width=100):
   for i in range(num_orders):  
     # small rolls from i-th order must be at least as many in quantity
     # as specified by the i-th order
-    solver.Add(sum(x[i][j] for j in range(k[1])) >= demands[i][0]) 
+    solver.Add(sum(x[i][j] for j in range(k[1])) == demands[i][0]) 
+    # == is ExactCut; >= is minimized waste (slower)
 
   # constraint: max size limit
   for j in range(k[1]):
@@ -218,7 +219,7 @@ def solve_large_model(demands, parent_width=100):
   num_orders = len(demands)
   iter = 0
   patterns = get_initial_patterns(demands)
-  # print('method#solve_large_model, patterns', patterns)
+  print('method#solve_large_model, initial patterns', patterns)
 
   # list quantities of orders
   quantities = [demands[i][0] for i in range(num_orders)]
@@ -232,7 +233,7 @@ def solve_large_model(demands, parent_width=100):
     widths = [demands[i][1] for i in range(num_orders)]
     new_pattern, objectiveValue = get_new_pattern(l, widths, parent_width=parent_width)
 
-    # print('method#solve_large_model, new_pattern', new_pattern)
+    # print('method#solve_larsolve_masterge_model, new_pattern', new_pattern)
     # print('method#solve_large_model, objectiveValue', objectiveValue)
 
     for i in range(num_orders):
@@ -278,7 +279,8 @@ def solve_master(patterns, quantities, parent_width=100, integer=False):
   for i in range(num_patterns):
     # add constraint that this pattern (demand) must be met
     # there are m such constraints, for each pattern
-    constraints.append(solver.Add( sum(patterns[i][j]*y[j] for j in range(n)) >= quantities[i]) ) 
+    # >= Min Waste; == Exactcut
+    constraints.append(solver.Add( sum(patterns[i][j]*y[j] for j in range(n)) == quantities[i]) ) 
 
   status = solver.Solve()
   y = [int(ceil(e.SolutionValue())) for e in y]
@@ -447,7 +449,7 @@ def drawGraph(consumed_big_rolls, child_rolls, parent_width):
 
     # TODO: to add support for multiple different parent rolls, update here
     xSize = parent_width # width of big roll
-    ySize = 10 * len(consumed_big_rolls) # one big roll will take 10 units vertical space
+    ySize = 100 * len(consumed_big_rolls) # one big roll will take 10 units vertical space
 
     # draw rectangle
     fig,ax = plt.subplots(1)
@@ -466,16 +468,20 @@ def drawGraph(consumed_big_rolls, child_rolls, parent_width):
 
     # start plotting each big roll horizontly, from the bottom
     y1 = 0
+    unused_width_total = 0
     for i, big_roll in enumerate(consumed_big_rolls):
       '''
         big_roll = [leftover_width, [small_roll_1_1, small_roll_1_2, other_small_roll_2_1]]
       '''
       unused_width = big_roll[0]
       small_rolls = big_roll[1]
+      unused_width_total += unused_width
+      # print(unused_width_total)
+      
 
       x1 = 0
       x2 = 0
-      y2 = y1 + 8 # the height of each big roll will be 8 
+      y2 = y1 + 80 # the height of each big roll will be 8 
       for j, small_roll in enumerate(small_rolls):
         x2 = x2 + small_roll
         # print(f"{x1}, {y1} -> {x2}, {y2}")
@@ -494,7 +500,11 @@ def drawGraph(consumed_big_rolls, child_rolls, parent_width):
         rect_shape = patches.Rectangle((x1,y1), width, height, facecolor='black', label='Unused')
         ax.add_patch(rect_shape) # Add the patch to the Axes
 
-      y1 += 10 # next big roll will be plotted on top of current, a roll height is 8, so 2 will be margin between rolls
+      y1 += 100 # next big roll will be plotted on top of current, a roll height is 8, so 2 will be margin between rolls
+
+    rebar_loss_rate = unused_width_total/len(consumed_big_rolls)/12000*100
+    typer.echo(f"total rebar loss: {unused_width_total}")
+    typer.echo(f"rebar loss: {rebar_loss_rate}%")
 
     plt.show()
 
@@ -515,7 +525,7 @@ if __name__ == '__main__':
       child_rolls = gen_data(3)
     parent_rolls = [[10, 12000]] # 10 doesn't matter, it is not used at the moment
 
-    consumed_big_rolls = StockCutter1D(child_rolls, parent_rolls, output_json=False, large_model=False)
+    consumed_big_rolls = StockCutter1D(child_rolls, parent_rolls, output_json=False, large_model=True)
     typer.echo(f"{consumed_big_rolls}")
 
 
