@@ -219,11 +219,11 @@ def solve_large_model(demands, parent_width=100):
   num_orders = len(demands)
   iter = 0
   patterns = get_initial_patterns(demands)
-  print('method#solve_large_model, initial patterns', patterns)
+  # print('method#solve_large_model, initial patterns', patterns)
 
   # list quantities of orders
   quantities = [demands[i][0] for i in range(num_orders)]
-  print('quantities', quantities)
+  # print('quantities', quantities)
 
   while iter < 20:
     status, y, l = solve_master(patterns, quantities, parent_width=parent_width)
@@ -443,6 +443,20 @@ If the big roll ends with a black color, that part of the big roll is unused wid
 
 TODO: Assign each child roll a unique color
 '''
+def calc_loss(consumed_big_rolls):
+  unused_width_total = 0
+  for i, big_roll in enumerate(consumed_big_rolls):
+    '''
+      big_roll = [leftover_width, [small_roll_1_1, small_roll_1_2, other_small_roll_2_1]]
+    '''
+    unused_width = big_roll[0]
+    # small_rolls = big_roll[1]
+    unused_width_total += unused_width
+    # print(unused_width_total)
+
+  rebar_loss_rate = unused_width_total/len(consumed_big_rolls)/12000*100
+  return unused_width_total, rebar_loss_rate
+
 def drawGraph(consumed_big_rolls, child_rolls, parent_width):
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
@@ -468,6 +482,7 @@ def drawGraph(consumed_big_rolls, child_rolls, parent_width):
 
     # start plotting each big roll horizontly, from the bottom
     y1 = 0
+    #---------------FROM HERE CALC LOSS!!!!-------------------------------------
     unused_width_total = 0
     for i, big_roll in enumerate(consumed_big_rolls):
       '''
@@ -521,8 +536,8 @@ if __name__ == '__main__':
 
     if infile_name:
       child_rolls = get_data(infile_name)
-      child_rolls_ascending = get_data(infile_name)
-      child_rolls_descending = get_data(infile_name)
+      child_rolls_ascending = get_data_ascending(infile_name)
+      child_rolls_descending = get_data_descending(infile_name)
     else:
       child_rolls = gen_data(3)
     parent_rolls = [[10, 12000]] # 10 doesn't matter, it is not used at the moment
@@ -531,15 +546,19 @@ if __name__ == '__main__':
     consumed_big_rolls_ascending = StockCutter1D(child_rolls_ascending, parent_rolls, output_json=False, large_model=True)
     consumed_big_rolls_descending = StockCutter1D(child_rolls_descending, parent_rolls, output_json=False, large_model=True)
 
-    # typer.echo(f"{consumed_big_rolls}")
-
+    # typer.echo(f"{consumed_big_rolls_ascending}")
 
     # for idx, roll in enumerate(consumed_big_rolls):
     #   typer.echo(f"Roll #{idx}:{roll}")
 
-    drawGraph(consumed_big_rolls, child_rolls, parent_width=parent_rolls[0][1])
-    drawGraph(consumed_big_rolls_ascending, child_rolls, parent_width=parent_rolls[0][1])
-    drawGraph(consumed_big_rolls_descending, child_rolls, parent_width=parent_rolls[0][1])
 
+    unused_width_total = calc_loss(consumed_big_rolls)
+    unused_width_total_ascending = calc_loss(consumed_big_rolls_ascending)
+    unused_width_total_descending = calc_loss(consumed_big_rolls_descending)
+    typer.echo(f"total rebar loss: {unused_width_total}, \ntotal rebar loss_a: {unused_width_total_ascending}, \ntotal rebar loss_d: {unused_width_total_descending}")
+    # typer.echo(f"rebar loss: {rebar_loss_rate}%")
+
+    # drawGraph(consumed_big_rolls, child_rolls, parent_width=parent_rolls[0][1])
+    
 if __name__ == "__main__":
   typer.run(main)
